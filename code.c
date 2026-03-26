@@ -67,6 +67,10 @@ int main () {
             if (board[winCombinations[w][0]] == 1 &&
                 board[winCombinations[w][1]] == 1 &&
                 board[winCombinations[w][2]] == 1) {
+                // print final result
+                printf("\033[B");
+                printGrid();
+
                 printf("\033[2K\033[33mPlayer 1 has won!\033[0m\n\n");
                 return 1;
             }
@@ -77,14 +81,16 @@ int main () {
             if (board[winCombinations[w][0]] == 2 &&
                 board[winCombinations[w][1]] == 2 &&
                 board[winCombinations[w][2]] == 2) {
+                printf("\033[B");
+                printGrid();
+
                 printf("\033[2K\033[33mPlayer 2 has won!\033[0m\n\n");
                 return 2;
             }
         }
 
         // the question
-        printf("Player %d, please, pick a valid grid:\033[1C \033[1D", currentPlr);
-        fflush(stdin);
+        printf("Player %d, please, pick a valid grid:\033[1C \033[K\033[1D", currentPlr);
         // the solution of doom #2
         scanf(" %c%*", &input);
         while (getchar() != '\n' && getchar() != EOF);
@@ -136,6 +142,10 @@ int main () {
         // the solution of doom #3
         strcpy(errorStr, "                                  ");
     }
-    printf("\n\033[34mNobody won, what a bummer!\n\n\033[0m");
+
+    // print final result
+    printf("\033[B");
+    printGrid();
+    printf("\n\n\033[34mNobody won, what a bummer!\n\n\033[0m");
     return 0;
 }
