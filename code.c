@@ -10,7 +10,6 @@ char slots[9] = "123456789";
 char playerChars[2] = "xo";
 
 // error message edited when handled
-// \033[31mPlease input a valid cell!\033[0m
 const char *error = "\033[31mPlease input a valid cell!\033[0m";
 char errorStr[35] = "";
 
@@ -27,10 +26,27 @@ char slotColors[9][9] = {
 };
 
 // the colors used to edit slotColors
-char playerColors[2][9] = {
+const char *playerColors[2] = {
     "\033[31m", // player 1
     "\033[34m" // player 2
 };
+
+const int winCombinations[8][3] = {
+    {0,1,2}, {3,4,5}, {6,7,8},
+    {0,3,6}, {1,4,7}, {2,5,8},
+    {0,4,8}, {2,4,6}
+};
+
+int checkWin(int player) {
+    for (int w = 0; w < 8; w++) {
+        if (board[winCombinations[w][0]] == player &&
+            board[winCombinations[w][1]] == player &&
+            board[winCombinations[w][2]] == player) {
+            return 1;
+            }
+    }
+    return 0;
+}
 
 // print grid
 void printGrid() {
@@ -56,37 +72,20 @@ int main () {
     for (int i = 0; i < 9; i++) {
         printGrid();
 
-        int winCombinations[8][3] = {
-            {0,1,2}, {3,4,5}, {6,7,8},
-            {0,3,6}, {1,4,7}, {2,5,8},
-            {0,4,8}, {2,4,6}
-        };
-
         // if player1 won
-        for (int w = 0; w < 8; w++) {
-            if (board[winCombinations[w][0]] == 1 &&
-                board[winCombinations[w][1]] == 1 &&
-                board[winCombinations[w][2]] == 1) {
-                // print final result
-                printf("\033[B");
-                printGrid();
-
-                printf("\033[2K\033[33mPlayer 1 has won!\033[0m\n\n");
-                return 1;
-            }
+        if (checkWin(1)) {
+            printf("\033[B");
+            printGrid();
+            printf("\033[2K\033[33mPlayer 1 has won!\033[0m\n\n");
+            return 1;
         }
 
         // if player2 won
-        for (int w = 0; w < 8; w++) {
-            if (board[winCombinations[w][0]] == 2 &&
-                board[winCombinations[w][1]] == 2 &&
-                board[winCombinations[w][2]] == 2) {
-                printf("\033[B");
-                printGrid();
-
-                printf("\033[2K\033[33mPlayer 2 has won!\033[0m\n\n");
-                return 2;
-            }
+        if (checkWin(2)) {
+            printf("\033[B");
+            printGrid();
+            printf("\033[2K\033[33mPlayer 2 has won!\033[0m\n\n");
+            return 2;
         }
 
         // the question
