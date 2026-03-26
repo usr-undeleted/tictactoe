@@ -11,7 +11,7 @@ char playerChars[2] = "xo";
 
 // error message edited when handled
 const char *error = "\033[31mPlease input a valid cell!\033[0m";
-char errorStr[35] = "";
+char errorStr[35] = "\033[K";
 
 int board[9] = {0};
 
@@ -73,16 +73,7 @@ int main () {
     for (int i = 0; i < 9; i++) {
         printGrid();
 
-        /* if player1 won
-        if (checkWin(1)) {
-            printf("\033[B");
-            printGrid();
-            printf("\033[2K\033[33mPlayer 1 has won!\033[0m\n\n");
-            return 1;
-        }
-        */
-
-        // if player2 won
+        // if player won
         if (checkWin(prevPlr)) {
             printf("\033[B");
             printGrid();
@@ -141,9 +132,8 @@ int main () {
             break;
         }
 
-        // set error message to null
-        // the solution of doom #3
-        strcpy(errorStr, "                                  ");
+        // set error message to blank
+        strcpy(errorStr, "\033[K");
     }
 
     // print final result
