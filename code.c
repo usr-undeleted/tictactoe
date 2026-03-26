@@ -16,9 +16,9 @@ char errorStr[35] = "";
 
 // scores
 const int cells[9] = {
-    2,      4,      8,
+    128,    256,    512,
     16,     32,     64,
-    128,    256,    512};
+    2,      4,      8};
 
 int usedCells[9] = {0};
 
@@ -26,9 +26,9 @@ int usedCells[9] = {0};
 void printGrid() {
     printf("\033[8A%s\n%c | %c | %c\n─────────\n%c | %c | %c\n─────────\n%c | %c | %c\n\n",
     errorStr,
-    slots[0], slots[1], slots[2],
+    slots[6], slots[7], slots[8],
     slots[3], slots[4], slots[5],
-    slots[6], slots[7], slots[8]);
+    slots[0], slots[1], slots[2]);
 }
 
 int main () {
