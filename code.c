@@ -206,7 +206,7 @@ int playGame() {
         if (gameMode == 2 && currentPlr == 2) {
             printf("AI is thinking...\033[K");
             fflush(stdout);
-            sleep_float(0.1);
+            sleep_float(0.35);
             printf("\n");
             int move = aiMove();
             slots[move] = playerChars[1];
