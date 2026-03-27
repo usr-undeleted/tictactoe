@@ -368,9 +368,10 @@ int main (int argc, char *argv[]) {
             scores[1]);
 
         // ask for rematch
-        printf("Play again? (y/n): ");
-        scanf(" %c", &rematch);
-        while (getchar() != '\n' && getchar() != EOF);
+        printf("Play again? (Y/n): ");
+        char buf[16];
+        if (!fgets(buf, sizeof(buf), stdin)) break;
+        rematch = (buf[0] == 'y' || buf[0] == 'Y' || buf[0] == '\n') ? 'y' : 'n';
 
         if (rematch == 'y' || rematch == 'Y') {
             puts(GRIDSPACE);
