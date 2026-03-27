@@ -179,6 +179,7 @@ int aiMove() {
 // name to display for a player
 const char *playerName(int player) {
     if (gameMode == 2 && player == 2) return "AI";
+    if (gameMode == 2) return "Player";
     return player == 1 ? "Player 1" : "Player 2";
 }
 
@@ -215,7 +216,7 @@ int playGame() {
             usedCells[move] = 1;
         } else {
             // the question
-            printf("Player %d, please, pick a valid grid:\033[1C \033[K\033[1D", currentPlr);
+            printf("%s, please, pick a valid grid:\033[1C \033[K\033[1D", playerName(currentPlr));
             char buf[16];
             if (!fgets(buf, sizeof(buf), stdin)) continue;
             input = buf[0];
@@ -363,10 +364,9 @@ int main (int argc, char *argv[]) {
         }
 
         // show current scores
-        printf("\033[33mScore — Player 1: %d | %s: %d\033[0m\n\n",
-            scores[0],
-            gameMode == 2 ? "AI" : "Player 2",
-            scores[1]);
+        printf("\033[33mScore — %s: %d | %s: %d\033[0m\n\n",
+            playerName(1), scores[0],
+            playerName(2), scores[1]);
 
         // ask for rematch
         printf("Play again? (Y/n): ");
