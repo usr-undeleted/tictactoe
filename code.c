@@ -73,6 +73,12 @@ const int winCombinations[8][3] = {
     {0,4,8}, {2,4,6} // diagonal
 };
 
+// game mode, 1 = local 2 = vs ai
+int gameMode = 1;
+
+// wins per player across rematches
+int scores[2] = {0, 0};
+
 int checkWin(int player) {
     for (int w = 0; w < 8; w++) {
         if (board[winCombinations[w][0]] == player &&
@@ -93,12 +99,80 @@ void printGrid() {
     slotColors[0], slots[0], slotColors[1], slots[1], slotColors[2], slots[2]);
 }
 
-int main () {
+// reset board state for a new round
+void resetGame() {
+    memcpy(slots, "123456789", 9);
+    memset(board, 0, sizeof(board));
+    memset(usedCells, 0, sizeof(usedCells));
+    for (int i = 0; i < 9; i++) {
+        slotColors[i][0] = '\0';
+    }
+    strcpy(errorStr, "\033[K");
+}
 
-    // so that printing a new grid doesnt eat up your prompt
-    // the solution of doom #1
-    puts("\n\n\n\n\n\n\n");
+// minimax score for a given board state
+int minimax(int depth, int isMaximizing) {
+    if (checkWin(2)) return 10 - depth;
+    if (checkWin(1)) return depth - 10;
 
+    // check draw
+    int isDraw = 1;
+    for (int i = 0; i < 9; i++) {
+        if (board[i] == 0) { isDraw = 0; break; }
+    }
+    if (isDraw) return 0;
+
+    if (isMaximizing) {
+        int best = -1000;
+        for (int i = 0; i < 9; i++) {
+            if (board[i] == 0) {
+                board[i] = 2;
+                int score = minimax(depth + 1, 0);
+                board[i] = 0;
+                if (score > best) best = score;
+            }
+        }
+        return best;
+    } else {
+        int best = 1000;
+        for (int i = 0; i < 9; i++) {
+            if (board[i] == 0) {
+                board[i] = 1;
+                int score = minimax(depth + 1, 1);
+                board[i] = 0;
+                if (score < best) best = score;
+            }
+        }
+        return best;
+    }
+}
+
+// pick best move for ai using minimax
+int aiMove() {
+    int best = -1000;
+    int bestMove = -1;
+    for (int i = 0; i < 9; i++) {
+        if (board[i] == 0) {
+            board[i] = 2;
+            int score = minimax(0, 0);
+            board[i] = 0;
+            if (score > best) {
+                best = score;
+                bestMove = i;
+            }
+        }
+    }
+    return bestMove;
+}
+
+// name to display for a player
+const char *playerName(int player) {
+    if (gameMode == 2 && player == 2) return "AI";
+    return player == 1 ? "Player 1" : "Player 2";
+}
+
+// run one full game, returns winner (1 or 2) or 0 for draw
+int playGame() {
     // current player, always at
     // player 1 by default
     int currentPlr = 1;
@@ -113,47 +187,59 @@ int main () {
         if (checkWin(prevPlr)) {
             printf("\033[B");
             printGrid();
-            printf("\033[2K\033[33mPlayer %d has won!\033[0m\n\n", prevPlr);
+            printf("\033[2K\033[33m%s has won!\033[0m\n\n", playerName(prevPlr));
             return prevPlr;
         }
 
-        // the question
-        printf("Player %d, please, pick a valid grid:\033[1C \033[K\033[1D", currentPlr);
-        // the solution of doom #2
-        scanf(" %c%*", &input);
-        while (getchar() != '\n' && getchar() != EOF);
+        // ai turn
+        if (gameMode == 2 && currentPlr == 2) {
+            printf("AI is thinking...\033[K");
+            fflush(stdout);
+            sleep_float(0.5);
+            printf("\n");
+            int move = aiMove();
+            slots[move] = playerChars[1];
+            board[move] = 2;
+            strcpy(slotColors[move], playerColors[1]);
+            usedCells[move] = 1;
+        } else {
+            // the question
+            printf("Player %d, please, pick a valid grid:\033[1C \033[K\033[1D", currentPlr);
+            // the solution of doom #2
+            scanf(" %c%*", &input);
+            while (getchar() != '\n' && getchar() != EOF);
 
-        // check input and use it
-        int cnt = 0;
-        int j;
-        int validity = 0;
-        for (j = 1; j < 10; j++) {
+            // check input and use it
+            int j;
+            int validity = 0;
+            for (j = 1; j < 10; j++) {
 
-            if (usedCells[j - 1] == 1) {
+                if (usedCells[j - 1] == 1) {
+                    continue;
+                }
+
+                if ((input - '0') == j) {
+                    slots[j - 1] = playerChars[currentPlr - 1];
+                    board[j - 1] = currentPlr;
+                    strcpy(slotColors[j - 1], playerColors[currentPlr - 1]);
+                    usedCells[j - 1] = 1;
+
+                    validity = 1;
+
+                    break;
+                } else {
+                    continue;
+                }
+            }
+
+            // (in)validity handle
+            if (!validity) {
+                strcpy(errorStr, error);
+                if (i != 0) {
+                    i--;
+                }
                 continue;
             }
-
-            if ((input - '0') == j) {
-                slots[j - 1] = playerChars[currentPlr - 1];
-                board[j - 1] = currentPlr;
-                strcpy(slotColors[j - 1], playerColors[currentPlr - 1]);
-                usedCells[j - 1] = 1;
-
-                validity = 1;
-
-                break;
-            } else {
-                continue;
-            }
-        }
-
-        // (in)validity handle
-        if (!validity) {
-            strcpy(errorStr, error);
-            if (i != 0) {
-                i--;
-            }
-            continue;
         }
 
         // toggle current player
@@ -175,16 +261,10 @@ int main () {
     // check for incase two winning combinations
     // are made. we really dont know why it didnt
     // work in the for loop...
-    // cat is only here cus easter egg >:3
-    // ... sorry player 2!
     if (checkWin(prevPlr)) {
         printf("\033[B");
         printGrid();
-        printf("\033[2K\033[33mPlayer %d has won!\033[0m\033[K\n\n", prevPlr);
-        // print cat
-        puts("\n\n");
-        printCat();
-        puts("\33[2K\r"); // clear weird err msg that appears
+        printf("\033[2K\033[33m%s has won!\033[0m\033[K\n\n", playerName(prevPlr));
         return prevPlr;
     }
 
@@ -192,5 +272,65 @@ int main () {
     printf("\033[B");
     printGrid();
     printf("\033[34mNobody won, what a bummer!\033[K\n\n\033[0m");
+    return 0;
+}
+
+// show start menu, sets gameMode
+void showMenu() {
+    printf("=== Tic Tac Toe ===\n\n");
+    printf("1. Local multiplayer\n");
+    printf("2. vs AI\n\n");
+    printf("Pick a mode: ");
+
+    char input;
+    while (1) {
+        scanf(" %c", &input);
+        while (getchar() != '\n' && getchar() != EOF);
+        if (input == '1' || input == '2') {
+            gameMode = input - '0';
+            break;
+        }
+        printf("Please pick 1 or 2: ");
+    }
+}
+
+int main () {
+    showMenu();
+
+    // so that printing a new grid doesnt eat up your prompt
+    // the solution of doom #1
+    puts("\n\n\n\n\n\n\n");
+
+    char rematch;
+    do {
+        resetGame();
+
+        int winner = playGame();
+
+        // cat is only here cus easter egg >:3
+        // ... sorry player 2!
+        if (winner != 0) {
+            scores[winner - 1]++;
+            puts("\n\n");
+            printCat();
+            puts("\33[2K\r"); // clear weird err msg that appears
+        }
+
+        // show current scores
+        printf("\033[33mScore — Player 1: %d | %s: %d\033[0m\n\n",
+            scores[0],
+            gameMode == 2 ? "AI" : "Player 2",
+            scores[1]);
+
+        // ask for rematch
+        printf("Play again? (y/n): ");
+        scanf(" %c", &rematch);
+        while (getchar() != '\n' && getchar() != EOF);
+
+        if (rematch == 'y' || rematch == 'Y') {
+            puts("\n\n\n\n\n\n\n");
+        }
+    } while (rematch == 'y' || rematch == 'Y');
+
     return 0;
 }
