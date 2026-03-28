@@ -23,30 +23,37 @@ char *catFrames[] =  {
   NULL
 };
 
-void sleep_float(float seconds) {
+// get size of double pointer array
+int getDoublePointSize(char *array[]) {
+    int count = 0;
+    while (array[count] != NULL) {
+        count++;
+    }
+    return count;
+}
+
+void sleepFloat(float seconds) {
     struct timespec ts;
     ts.tv_sec = (time_t)seconds;
     ts.tv_nsec = (long)((seconds - ts.tv_sec) * 1e9); // convert decimal to nanoseconds
     nanosleep(&ts, NULL);
 }
 
+// -- all the options --
+//
 // pick wether cat is there or not
 int catToggle = 0;
-// extra newlines added incase
-// kitty exists
-char *kittyNewLines = "";
+//
+// remove color if specified
+int rmColorToggle = 0;
 
 // print cat gif
 void printCat () {
-    // get the amount of frames
-    int count = 0;
-    while (catFrames[count] != NULL) {
-        count++;
-    }
+    int count = getDoublePointSize(catFrames);
 
     for (int i = 0; i < count; i++) {
         printf("%s", catFrames[i]);
-        sleep_float(0.356);
+        sleepFloat(0.356);
     }
 }
 
@@ -57,7 +64,7 @@ char slots[9] = "123456789";
 char playerChars[2] = "xo";
 
 // error message edited when handled
-const char *error = "\033[31mPlease input a valid cell!\033[0m";
+char *error = "Please input a valid cell!";
 char errorStr[35] = "\033[K";
 
 int board[9] = {0};
@@ -72,11 +79,27 @@ char slotColors[9][9] = {
     "", "", "",
 };
 
-// the colors used to edit slotColors
-const char *playerColors[2] = {
-    "\033[31m", // player 1
-    "\033[34m" // player 2
+// general use colors
+#define RED     0
+#define BLUE    1
+#define GREEN   2
+#define YELLOW  3
+#define PURPLE  4
+#define CYAN    5
+#define WHITE   6
+#define RESET   7
+char *ansiColors[] = {
+    "\033[31m", // player 1 (red)
+    "\033[34m", // player 2 (blue)
+    "\033[32m", // green
+    "\033[33m", // yellow
+    "\033[35m", // purple
+    "\033[36m", // cyan
+    "\033[37m", // white
+    "\033[0m", // reset
+    ""
 };
+
 
 const int winCombinations[8][3] = {
     {0,1,2}, {3,4,5}, {6,7,8}, // horizontal
@@ -103,11 +126,11 @@ int checkWin(int player) {
 
 // print grid
 void printGrid() {
-    printf("\033[8A%s\n%s%c \033[0m| %s%c \033[0m| %s%c\n\033[0m─────────\n%s%c \033[0m| %s%c \033[0m| %s%c\n\033[0m─────────\n%s%c \033[0m| %s%c \033[0m| %s%c\033[0m\n\n",
-    errorStr,
-    slotColors[6], slots[6], slotColors[7], slots[7], slotColors[8], slots[8],
-    slotColors[3], slots[3], slotColors[4], slots[4], slotColors[5], slots[5],
-    slotColors[0], slots[0], slotColors[1], slots[1], slotColors[2], slots[2]);
+    printf("\033[8A%s%s\n%s%c %s| %s%c %s| %s%c\n%s─────────\n%s%c %s| %s%c %s| %s%c\n%s─────────\n%s%c %s| %s%c %s| %s%c%s\n\n",
+    ansiColors[RESET] ,errorStr,
+    slotColors[6], slots[6], slotColors[7], ansiColors[RESET], slots[7], slotColors[8], ansiColors[RESET], slots[8],
+    ansiColors[RESET], slotColors[3], slots[3], slotColors[4], ansiColors[RESET], slots[4], slotColors[5], ansiColors[RESET], slots[5],
+    slotColors[0], ansiColors[RESET], slots[0], slotColors[1], ansiColors[RESET], slots[1], slotColors[2], ansiColors[RESET], slots[2], ansiColors[RESET]);
 }
 
 // reset board state for a new round
@@ -199,7 +222,7 @@ int playGame() {
         if (checkWin(prevPlr)) {
             printf("\033[B");
             printGrid();
-            printf("\033[2K\033[33m%s has won!\033[0m\n\n", playerName(prevPlr));
+            printf("\033[2K%s%s has won!%s\n\n", ansiColors[YELLOW], playerName(prevPlr), ansiColors[RESET]);
             return prevPlr;
         }
 
@@ -207,12 +230,12 @@ int playGame() {
         if (gameMode == 2 && currentPlr == 2) {
             printf("AI is thinking...\033[K");
             fflush(stdout);
-            sleep_float(0.35);
+            sleepFloat(0.35);
             printf("\n");
             int move = aiMove();
             slots[move] = playerChars[1];
             board[move] = 2;
-            strcpy(slotColors[move], playerColors[1]);
+            strcpy(slotColors[move], ansiColors[1]);
             usedCells[move] = 1;
         } else {
             // the question
@@ -233,7 +256,7 @@ int playGame() {
                 if ((input - '0') == j) {
                     slots[j - 1] = playerChars[currentPlr - 1];
                     board[j - 1] = currentPlr;
-                    strcpy(slotColors[j - 1], playerColors[currentPlr - 1]);
+                    strcpy(slotColors[j - 1], ansiColors[currentPlr - 1]);
                     usedCells[j - 1] = 1;
 
                     validity = 1;
@@ -276,24 +299,27 @@ int playGame() {
     if (checkWin(prevPlr)) {
         printf("\033[B");
         printGrid();
-        printf("\033[2K\033[33m%s has won!\033[0m\033[K\n\n", playerName(prevPlr));
+        printf("\033[2K%s%s has won!%s\033[K\n\n",
+            ansiColors[YELLOW], playerName(prevPlr),
+            ansiColors[RESET]);
         return prevPlr;
     }
 
-    // print final result
+    // print final resuchar **arraylt
     printf("\033[B");
     printGrid();
-    printf("\033[34mNobody won, what a bummer!\033[K\n\n\033[0m");
+    printf("%sNobody won, what a bummer!\033[K\n\n%s",
+        ansiColors[BLUE], ansiColors[RESET]);
     return 0;
 }
 
 // show start menu, sets gameMode
 void showMenu() {
-    fputs("=== C TicTacToe! ===\n\n"
+    printf("%s=== C TicTacToe! ===\n\n"
         "1. Local multiplayer\n"
         "2. vs AI\n\n"
-        "Pick a mode: "
-        , stdout);
+        "Pick a mode: ",
+        ansiColors[RESET], stdout);
 
     char input;
     while (1) {
@@ -310,11 +336,13 @@ void showMenu() {
 
 // help msg
 void helpUsr() {
-    fputs("\033[34mThis is free software hosted under https://github.com/usr-undeleted/tictactoe and license under the GPL-3 license.\n"
-    "\033[0mUsage: tictactoe [OPTIONS]\n"
+    printf("%sThis is free software hosted under https://github.com/usr-undeleted/tictactoe and license under the GPL-3 license.\n"
+    "%sUsage: tictactoe [OPTIONS]\n"
     "The program will guide you with a menu.\n\nOptions:\n"
-    "    help: Show this message.\n"
-    "    cat: Enables kitty animation when someone wins.\n",
+    "   help: Show this message.\n"
+    "   cat: Enables kitty animation when someone wins.\n"
+    "   no-color: Disable all color in code.\n",
+    ansiColors[BLUE], ansiColors[RESET],
     stdout);
     exit(0);
 }
@@ -324,14 +352,29 @@ int main (int argc, char *argv[]) {
     // get args used
     for (int i = 1; i < argc; i++) {
         // help
-        if (!strcmp(argv[i], "help")) {
+        if (!strcmp(argv[i], "no-color")) {
+            rmColorToggle = 1;
+
+        } else if (!strcmp(argv[i], "help")) {
             helpUsr();
             return 0;
+
         } else if (!strcmp(argv[i], "cat")) {
             catToggle = 1;
+
         } else { // invalid arg
-            fprintf(stderr, "\033[31mError! Make sure to input a valid argument.\n Use 'tictactoe help' for command usage.\n\033[0m");
+            fprintf(stderr, "%sError! Make sure to input a valid argument.\n Use 'tictactoe help' for command usage.\n%s", ansiColors[0], ansiColors[7]);
             return 10;
+        }
+    }
+
+    // remove colors
+    // 9 since it is all ansi colors
+    if (rmColorToggle) {
+        int count = getDoublePointSize(ansiColors);
+        printf("%s ", ansiColors[0]);
+        for (int i = 0; i < count - 2; i++) {
+            ansiColors[i] = "";
         }
     }
 
@@ -353,20 +396,19 @@ int main (int argc, char *argv[]) {
 
             if (catToggle) {
                 printCat();
+            } else {
+                puts("\033[5A");
             }
 
             puts("\33[2K\r"); // clear weird err msg that appears
-
-            // proper spacing for cat
-            if (!catToggle) {
-                puts("\033[5A");
-            }
         }
 
         // show current scores
-        printf("\033[33mScore — %s: %d | %s: %d\033[0m\n\n",
+        printf("%sScore — %s: %d | %s: %d%s\n\n",
+            ansiColors[YELLOW],
             playerName(1), scores[0],
-            playerName(2), scores[1]);
+            playerName(2), scores[1],
+            ansiColors[RESET]);
 
         // ask for rematch
         printf("Play again? (Y/n): ");
