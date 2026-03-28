@@ -23,6 +23,15 @@ char *catFrames[] =  {
   NULL
 };
 
+char *eyebrowFrames[] = {
+    " _ _\n(¬‿¬)", // eyebrow down 1
+    " _ -\n(¬‿¬)", // halfway up 1
+    " _ ^\n(¬‿¬)", // fully raised
+    " _ -\n(¬‿¬)", // halfway up 2
+    " _ _\n(¬‿¬)", // eyebrow down 2
+    NULL
+};
+
 // get size of double pointer array
 int getDoublePointSize(char *array[]) {
     int count = 0;
@@ -126,11 +135,16 @@ int checkWin(int player) {
 
 // print grid
 void printGrid() {
-    printf("\033[8A%s%s\n%s%c %s| %s%c %s| %s%c\n%s─────────\n%s%c %s| %s%c %s| %s%c\n%s─────────\n%s%c %s| %s%c %s| %s%c%s\n\n",
-    ansiColors[RESET] ,errorStr,
-    slotColors[6], slots[6], slotColors[7], ansiColors[RESET], slots[7], slotColors[8], ansiColors[RESET], slots[8],
-    ansiColors[RESET], slotColors[3], slots[3], slotColors[4], ansiColors[RESET], slots[4], slotColors[5], ansiColors[RESET], slots[5],
-    slotColors[0], ansiColors[RESET], slots[0], slotColors[1], ansiColors[RESET], slots[1], slotColors[2], ansiColors[RESET], slots[2], ansiColors[RESET]);
+    printf("\033[8A%s%s%s\n"
+        "%s%c %s| %s%c %s| %s%c\n"
+        "%s─────────\n"
+        "%s%c %s| %s%c %s| %s%c\n"
+        "%s─────────\n"
+        "%s%c %s| %s%c %s| %s%c%s\n\n",
+    ansiColors[RED], errorStr, ansiColors[RESET],
+    slotColors[6], slots[6], ansiColors[RESET], slotColors[7], slots[7], ansiColors[RESET], slotColors[8], slots[8],
+    ansiColors[RESET], slotColors[3], slots[3], ansiColors[RESET], slotColors[4], slots[4], ansiColors[RESET], slotColors[5], slots[5],
+    ansiColors[RESET], slotColors[0], slots[0], ansiColors[RESET], slotColors[1], slots[1], ansiColors[RESET], slotColors[2], slots[2], ansiColors[RESET]);
 }
 
 // reset board state for a new round
